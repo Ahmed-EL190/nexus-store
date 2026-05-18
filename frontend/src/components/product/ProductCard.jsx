@@ -36,12 +36,12 @@ export default function ProductCard({ product }) {
       <div className="relative overflow-hidden bg-brand-gray-100">
         {/* Badges */}
         <div className="absolute top-3 left-3 z-10 flex flex-col gap-1">
-          {product.discount > 0 && (
+          {product?.discount > 0 && (
             <span className="bg-brand-black text-brand-white text-xs font-mono px-2 py-0.5">
               -{product.discount}%
             </span>
           )}
-          {product.badge && product.badge !== `${product.discount}% OFF` && (
+          {product?.badge && product.badge !== `${product.discount ?? 0}% OFF` && (
             <span className="bg-brand-accent text-brand-black text-xs font-bold px-2 py-0.5">
               {product.badge}
             </span>
@@ -82,18 +82,18 @@ export default function ProductCard({ product }) {
       {/* Info */}
       <div className="mt-3 px-1">
         <h3 className="text-sm font-semibold text-brand-black group-hover:text-brand-gray-600 transition-colors truncate">
-          {product.name}
+          {product?.name || 'Product'}
         </h3>
         <div className="flex items-center justify-between mt-1">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-bold">LE {product.price.toLocaleString()}</span>
-            {product.originalPrice > product.price && (
-              <span className="text-xs text-brand-gray-400 line-through">LE {product.originalPrice.toLocaleString()}</span>
+            <span className="text-sm font-bold">LE {(product?.price ?? 0).toLocaleString()}</span>
+            {product?.originalPrice > product?.price && (
+              <span className="text-xs text-brand-gray-400 line-through">LE {(product?.originalPrice ?? 0).toLocaleString()}</span>
             )}
           </div>
           <div className="flex items-center gap-1">
             <Star size={11} fill="#c8f542" stroke="none" />
-            <span className="text-xs text-brand-gray-500">{product.rating}</span>
+            <span className="text-xs text-brand-gray-500">{product?.rating ?? 0}</span>
           </div>
         </div>
         {/* Color dots */}

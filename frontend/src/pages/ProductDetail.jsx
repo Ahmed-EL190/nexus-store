@@ -30,20 +30,20 @@ export default function ProductDetail() {
 
   useEffect(() => {
     if (product) {
-      axios.get(`/api/products?category=${product.category}&limit=4`).then(r => {
+      axios.get(`/api/products?category=${product?.category ?? ''}&limit=4`).then(r => {
         const relatedProducts = r.data?.products || [];
         setRelated(relatedProducts.filter(p => p.id !== id).slice(0, 4));
       }).catch(() => {});
     }
   }, [product]);
 
-  const images = product.images || [];
-  const colors = product.colors || [];
-  const sizes = product.sizes || [];
+  const images = product?.images || [];
+  const colors = product?.colors || [];
+  const sizes = product?.sizes || [];
 
   const addToCart = () => {
     if (!size) { toast.error('Please select a size'); return; }
-    dispatch({ type: 'ADD_ITEM', payload: { id: product.id, name: product.name, price: product.price ?? 0, image: images[0] || placeholderImage, color, size, qty } });
+    dispatch({ type: 'ADD_ITEM', payload: { id: product?.id, name: product?.name || 'Product', price: product?.price ?? 0, image: images[0] || placeholderImage, color, size, qty } });
     toast.success('Added to cart!');
   };
 
@@ -65,14 +65,14 @@ export default function ProductDetail() {
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Breadcrumb */}
         <nav className="text-xs text-brand-gray-400 font-mono tracking-wider mb-8">
-          <Link to="/" className="hover:text-black">HOME</Link> / <Link to="/shop" className="hover:text-black">SHOP</Link> / <span className="text-black">{product.name.toUpperCase()}</span>
+          <Link to="/" className="hover:text-black">HOME</Link> / <Link to="/shop" className="hover:text-black">SHOP</Link> / <span className="text-black">{product?.name?.toUpperCase() || ''}</span>
         </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Images */}
           <div>
             <div className="aspect-square overflow-hidden bg-brand-gray-100 mb-3">
-              <img src={images[imgIdx] || placeholderImage} alt={product.name || 'Product image'} className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" onError={handleImageError}/>
+              <img src={images[imgIdx] || placeholderImage} alt={product?.name || 'Product image'} className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" onError={handleImageError}/>
             </div>
             {images.length > 1 && (
               <div className="grid grid-cols-4 gap-2">
@@ -90,26 +90,26 @@ export default function ProductDetail() {
           <div className="flex flex-col gap-6">
             {/* Badges */}
             <div className="flex gap-2">
-              {product.discount > 0 && <span className="bg-black text-white text-xs font-mono px-3 py-1">-{product.discount}%</span>}
-              {product.badge && <span className="bg-brand-accent text-black text-xs font-bold px-3 py-1">{product.badge}</span>}
+              {product?.discount > 0 && <span className="bg-black text-white text-xs font-mono px-3 py-1">-{product.discount}%</span>}
+              {product?.badge && <span className="bg-brand-accent text-black text-xs font-bold px-3 py-1">{product.badge}</span>}
             </div>
 
             <div>
-              <h1 className="font-display text-4xl md:text-5xl tracking-widest">{product.name?.toUpperCase() || ''}</h1>
+              <h1 className="font-display text-4xl md:text-5xl tracking-widest">{product?.name?.toUpperCase() || ''}</h1>
               <div className="flex items-center gap-3 mt-2">
-                <div className="flex gap-0.5">{[...Array(5)].map((_, i) => <Star key={i} size={14} fill={i < Math.round(product.rating || 0) ? '#c8f542' : '#e0e0e0'} stroke="none"/>)}</div>
-                <span className="text-sm text-brand-gray-500">{product.rating ?? 0} ({product.reviews ?? 0} reviews)</span>
+                <div className="flex gap-0.5">{[...Array(5)].map((_, i) => <Star key={i} size={14} fill={i < Math.round(product?.rating || 0) ? '#c8f542' : '#e0e0e0'} stroke="none"/>)}</div>
+                <span className="text-sm text-brand-gray-500">{product?.rating ?? 0} ({product?.reviews ?? 0} reviews)</span>
               </div>
             </div>
 
             <div className="flex items-center gap-4">
-              <span className="font-display text-4xl">LE {(product.price ?? 0).toLocaleString()}</span>
-              {product.originalPrice > (product.price ?? 0) && (
-                <span className="text-xl text-brand-gray-400 line-through">LE {(product.originalPrice ?? 0).toLocaleString()}</span>
+              <span className="font-display text-4xl">LE {(product?.price ?? 0).toLocaleString()}</span>
+              {product?.originalPrice > (product?.price ?? 0) && (
+                <span className="text-xl text-brand-gray-400 line-through">LE {(product?.originalPrice ?? 0).toLocaleString()}</span>
               )}
             </div>
 
-            <p className="text-brand-gray-600 leading-relaxed">{product.description || ''}</p>
+            <p className="text-brand-gray-600 leading-relaxed">{product?.description || ''}</p>
 
             {/* Color */}
             <div>
