@@ -5,7 +5,7 @@ import axios from 'axios';
 import { useCart } from '../context/CartContext';
 import toast from 'react-hot-toast';
 import ProductCard from '../components/product/ProductCard';
-import { handleImageError } from '../utils/imageFallback';
+import { handleImageError, placeholderImage } from '../utils/imageFallback';
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -22,8 +22,8 @@ export default function ProductDetail() {
   useEffect(() => {
     setLoading(true);
     axios.get(`/api/products/${id}`).then(r => {
-      setProduct(r.data);
-      setColor(r.data.colors[0]);
+      setProduct(r.data ?? {});
+      setColor(r.data?.colors?.[0] ?? null);
       setSize(null);
     }).catch(() => {}).finally(() => setLoading(false));
   }, [id]);
@@ -31,14 +31,19 @@ export default function ProductDetail() {
   useEffect(() => {
     if (product) {
       axios.get(`/api/products?category=${product.category}&limit=4`).then(r => {
-        setRelated(r.data.products.filter(p => p.id !== id).slice(0, 4));
-      });
+        const relatedProducts = r.data?.products || [];
+        setRelated(relatedProducts.filter(p => p.id !== id).slice(0, 4));
+      }).catch(() => {});
     }
   }, [product]);
 
+  const images = product.images || [];
+  const colors = product.colors || [];
+  const sizes = product.sizes || [];
+
   const addToCart = () => {
     if (!size) { toast.error('Please select a size'); return; }
-    dispatch({ type: 'ADD_ITEM', payload: { id: product.id, name: product.name, price: product.price, image: product.images[0], color, size, qty } });
+    dispatch({ type: 'ADD_ITEM', payload: { id: product.id, name: product.name, price: product.price ?? 0, image: images[0] || placeholderImage, color, size, qty } });
     toast.success('Added to cart!');
   };
 
@@ -67,14 +72,14 @@ export default function ProductDetail() {
           {/* Images */}
           <div>
             <div className="aspect-square overflow-hidden bg-brand-gray-100 mb-3">
-              <img src={product.images[imgIdx]} alt={product.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" onError={handleImageError}/>
+              <img src={images[imgIdx] || placeholderImage} alt={product.name || 'Product image'} className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" onError={handleImageError}/>
             </div>
-            {product.images.length > 1 && (
+            {images.length > 1 && (
               <div className="grid grid-cols-4 gap-2">
-                {product.images.map((img, i) => (
+                {images.map((img, i) => (
                   <button key={i} onClick={() => setImgIdx(i)}
                     className={`aspect-square overflow-hidden border-2 transition-colors ${imgIdx === i ? 'border-black' : 'border-transparent'}`}>
-                    <img src={img} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" onError={handleImageError}/>
+                    <img src={img || placeholderImage} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" onError={handleImageError}/>
                   </button>
                 ))}
               </div>
@@ -90,27 +95,27 @@ export default function ProductDetail() {
             </div>
 
             <div>
-              <h1 className="font-display text-4xl md:text-5xl tracking-widest">{product.name.toUpperCase()}</h1>
+              <h1 className="font-display text-4xl md:text-5xl tracking-widest">{product.name?.toUpperCase() || ''}</h1>
               <div className="flex items-center gap-3 mt-2">
-                <div className="flex gap-0.5">{[...Array(5)].map((_, i) => <Star key={i} size={14} fill={i < Math.round(product.rating) ? '#c8f542' : '#e0e0e0'} stroke="none"/>)}</div>
-                <span className="text-sm text-brand-gray-500">{product.rating} ({product.reviews} reviews)</span>
+                <div className="flex gap-0.5">{[...Array(5)].map((_, i) => <Star key={i} size={14} fill={i < Math.round(product.rating || 0) ? '#c8f542' : '#e0e0e0'} stroke="none"/>)}</div>
+                <span className="text-sm text-brand-gray-500">{product.rating ?? 0} ({product.reviews ?? 0} reviews)</span>
               </div>
             </div>
 
             <div className="flex items-center gap-4">
-              <span className="font-display text-4xl">LE {product.price.toLocaleString()}</span>
-              {product.originalPrice > product.price && (
-                <span className="text-xl text-brand-gray-400 line-through">LE {product.originalPrice.toLocaleString()}</span>
+              <span className="font-display text-4xl">LE {(product.price ?? 0).toLocaleString()}</span>
+              {product.originalPrice > (product.price ?? 0) && (
+                <span className="text-xl text-brand-gray-400 line-through">LE {(product.originalPrice ?? 0).toLocaleString()}</span>
               )}
             </div>
 
-            <p className="text-brand-gray-600 leading-relaxed">{product.description}</p>
+            <p className="text-brand-gray-600 leading-relaxed">{product.description || ''}</p>
 
             {/* Color */}
             <div>
               <p className="text-xs font-mono tracking-widest uppercase mb-3">Color: <span className="font-bold text-black">{color}</span></p>
               <div className="flex gap-2">
-                {product.colors.map(c => (
+                {colors.map(c => (
                   <button key={c} onClick={() => setColor(c)}
                     className={`w-8 h-8 rounded-full border-2 transition-all ${color === c ? 'border-black scale-110' : 'border-transparent hover:border-brand-gray-400'}`}
                     style={{ background: c }} />
@@ -122,7 +127,7 @@ export default function ProductDetail() {
             <div>
               <p className="text-xs font-mono tracking-widest uppercase mb-3">Size: {!size && <span className="text-red-500">Select a size</span>}</p>
               <div className="flex gap-2 flex-wrap">
-                {product.sizes.map(s => (
+                {sizes.map(s => (
                   <button key={s} onClick={() => setSize(s)}
                     className={`w-12 h-12 border-2 text-sm font-semibold transition-all ${size === s ? 'bg-black text-white border-black' : 'border-brand-gray-300 hover:border-black'}`}>
                     {s}

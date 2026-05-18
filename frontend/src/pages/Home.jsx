@@ -63,7 +63,9 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    axios.get('/api/products?featured=true&limit=6').then(r => setProducts(r.data.products)).catch(() => {});
+    axios.get('/api/products?featured=true&limit=6')
+      .then(r => setProducts(r.data?.products || []))
+      .catch(() => setProducts([]));
   }, []);
 
   return (

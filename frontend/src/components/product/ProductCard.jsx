@@ -3,28 +3,32 @@ import { Link } from 'react-router-dom';
 import { ShoppingBag, Star, Heart } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import toast from 'react-hot-toast';
-import { handleImageError } from '../../utils/imageFallback';
+import { handleImageError, placeholderImage } from '../../utils/imageFallback';
 
 export default function ProductCard({ product }) {
   const [imgIdx, setImgIdx] = useState(0);
   const [liked, setLiked] = useState(false);
   const { dispatch } = useCart();
 
+  const images = product?.images || [];
+  const colors = product?.colors || [];
+  const sizes = product?.sizes || [];
+
   const addToCart = (e) => {
     e.preventDefault();
     dispatch({
       type: 'ADD_ITEM',
       payload: {
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        image: product.images[0],
-        color: product.colors[0],
-        size: product.sizes[Math.floor(product.sizes.length / 2)],
+        id: product?.id,
+        name: product?.name || 'Product',
+        price: product?.price ?? 0,
+        image: images[0] || placeholderImage,
+        color: colors[0] || '#000',
+        size: sizes[Math.floor(sizes.length / 2)] || 'M',
         qty: 1
       }
     });
-    toast.success(`${product.name} added to cart!`);
+    toast.success(`${product?.name || 'Item'} added to cart!`);
   };
 
   return (
@@ -54,11 +58,11 @@ export default function ProductCard({ product }) {
 
         {/* Image */}
         <div className="aspect-[3/4] overflow-hidden"
-          onMouseEnter={() => product.images[1] && setImgIdx(1)}
+          onMouseEnter={() => images[1] && setImgIdx(1)}
           onMouseLeave={() => setImgIdx(0)}>
           <img
-            src={product.images[imgIdx]}
-            alt={product.name}
+            src={images[imgIdx] || placeholderImage}
+            alt={product?.name || 'Product image'}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             referrerPolicy="no-referrer"
             loading="lazy"
@@ -94,10 +98,10 @@ export default function ProductCard({ product }) {
         </div>
         {/* Color dots */}
         <div className="flex gap-1 mt-2">
-          {product.colors.slice(0, 5).map(c => (
+          {colors.slice(0, 5).map(c => (
             <span key={c} className="w-3 h-3 rounded-full border border-brand-gray-300" style={{ background: c }} />
           ))}
-          {product.colors.length > 5 && <span className="text-xs text-brand-gray-400">+{product.colors.length - 5}</span>}
+          {colors.length > 5 && <span className="text-xs text-brand-gray-400">+{colors.length - 5}</span>}
         </div>
       </div>
     </Link>

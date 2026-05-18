@@ -3,18 +3,19 @@ import { createContext, useContext, useReducer, useEffect } from 'react';
 const CartContext = createContext();
 
 const cartReducer = (state, action) => {
+  const items = state.items || [];
   switch (action.type) {
     case 'ADD_ITEM': {
-      const exists = state.items.find(i => i.id === action.payload.id && i.color === action.payload.color && i.size === action.payload.size);
+      const exists = items.find(i => i.id === action.payload.id && i.color === action.payload.color && i.size === action.payload.size);
       if (exists) {
-        return { ...state, items: state.items.map(i => i.id === action.payload.id && i.color === action.payload.color && i.size === action.payload.size ? { ...i, qty: i.qty + action.payload.qty } : i) };
+        return { ...state, items: items.map(i => i.id === action.payload.id && i.color === action.payload.color && i.size === action.payload.size ? { ...i, qty: i.qty + action.payload.qty } : i) };
       }
-      return { ...state, items: [...state.items, action.payload] };
+      return { ...state, items: [...items, action.payload] };
     }
     case 'REMOVE_ITEM':
-      return { ...state, items: state.items.filter(i => !(i.id === action.payload.id && i.color === action.payload.color && i.size === action.payload.size)) };
+      return { ...state, items: items.filter(i => !(i.id === action.payload.id && i.color === action.payload.color && i.size === action.payload.size)) };
     case 'UPDATE_QTY':
-      return { ...state, items: state.items.map(i => i.id === action.payload.id && i.color === action.payload.color && i.size === action.payload.size ? { ...i, qty: action.payload.qty } : i) };
+      return { ...state, items: items.map(i => i.id === action.payload.id && i.color === action.payload.color && i.size === action.payload.size ? { ...i, qty: action.payload.qty } : i) };
     case 'CLEAR':
       return { ...state, items: [] };
     default:

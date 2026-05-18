@@ -5,7 +5,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
-import { handleImageError } from '../utils/imageFallback';
+import { handleImageError, placeholderImage } from '../utils/imageFallback';
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/admin' },
@@ -49,15 +49,23 @@ function Sidebar({ open, setOpen }) {
 // Dashboard Stats Overview
 function DashStats() {
   const [stats, setStats] = useState(null);
-  useEffect(() => { axios.get('/api/admin/stats').then(r => setStats(r.data)).catch(() => {}); }, []);
+  useEffect(() => {
+    axios.get('/api/admin/stats')
+      .then(r => setStats(r.data || {}))
+      .catch(() => setStats({}));
+  }, []);
 
-  if (!stats) return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-black border-t-transparent rounded-full animate-spin"/></div>;
+  if (!stats || Object.keys(stats).length === 0) return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-black border-t-transparent rounded-full animate-spin"/></div>;
+
+  const statusCounts = stats.statusCounts || {};
+  const revenueChart = stats.revenueChart || [];
+  const topProducts = stats.topProducts || [];
 
   const cards = [
-    { label: 'Total Revenue', value: `LE ${stats.totalRevenue.toLocaleString()}`, icon: TrendingUp, color: 'bg-brand-accent' },
-    { label: 'Total Orders', value: stats.totalOrders, icon: ShoppingCart, color: 'bg-blue-500' },
-    { label: 'Products', value: stats.totalProducts, icon: Package, color: 'bg-purple-500' },
-    { label: 'Customers', value: stats.totalCustomers, icon: Users, color: 'bg-green-500' },
+    { label: 'Total Revenue', value: `LE ${(stats.totalRevenue ?? 0).toLocaleString()}`, icon: TrendingUp, color: 'bg-brand-accent' },
+    { label: 'Total Orders', value: stats.totalOrders ?? 0, icon: ShoppingCart, color: 'bg-blue-500' },
+    { label: 'Products', value: stats.totalProducts ?? 0, icon: Package, color: 'bg-purple-500' },
+    { label: 'Customers', value: stats.totalCustomers ?? 0, icon: Users, color: 'bg-green-500' },
   ];
 
   return (
@@ -80,11 +88,11 @@ function DashStats() {
         <div className="bg-white border border-brand-gray-200 p-6">
           <h3 className="font-semibold text-sm uppercase tracking-wider text-brand-gray-600 mb-4">Revenue (Last 7 Days)</h3>
           <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={stats.revenueChart}>
+            <BarChart data={revenueChart}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0"/>
               <XAxis dataKey="date" tick={{fontSize:11}}/>
               <YAxis tick={{fontSize:11}}/>
-              <Tooltip formatter={v => `LE ${v.toLocaleString()}`}/>
+              <Tooltip formatter={v => `LE ${Number(v ?? 0).toLocaleString()}`}/>
               <Bar dataKey="revenue" fill="#c8f542"/>
             </BarChart>
           </ResponsiveContainer>
@@ -92,13 +100,13 @@ function DashStats() {
         <div className="bg-white border border-brand-gray-200 p-6">
           <h3 className="font-semibold text-sm uppercase tracking-wider text-brand-gray-600 mb-4">Order Status</h3>
           <div className="space-y-3 mt-6">
-            {Object.entries(stats.statusCounts).map(([k, v]) => (
+            {Object.entries(statusCounts).map(([k, v]) => (
               <div key={k} className="flex items-center justify-between">
                 <span className="text-sm font-semibold capitalize">{k}</span>
                 <span className="text-sm text-brand-gray-500">{v} orders</span>
               </div>
             ))}
-            {Object.keys(stats.statusCounts).length === 0 && <p className="text-brand-gray-400 text-sm">No orders yet</p>}
+            {Object.keys(statusCounts).length === 0 && <p className="text-brand-gray-400 text-sm">No orders yet</p>}
           </div>
         </div>
       </div>
@@ -107,12 +115,12 @@ function DashStats() {
       <div className="bg-white border border-brand-gray-200 p-6">
         <h3 className="font-semibold text-sm uppercase tracking-wider text-brand-gray-600 mb-4">Top Products</h3>
         <div className="space-y-3">
-          {stats.topProducts.map(p => (
+          {topProducts.map(p => (
             <div key={p.id} className="flex items-center gap-3">
-              <img src={p.images[0]} alt="" className="w-10 h-10 object-cover bg-brand-gray-100" referrerPolicy="no-referrer" loading="lazy" onError={handleImageError}/>
+              <img src={p.images?.[0] || placeholderImage} alt="" className="w-10 h-10 object-cover bg-brand-gray-100" referrerPolicy="no-referrer" loading="lazy" onError={handleImageError}/>
               <div className="flex-1"><p className="text-sm font-semibold">{p.name}</p>
-                <p className="text-xs text-brand-gray-500">{p.reviews} reviews</p></div>
-              <span className="font-mono text-sm">LE {p.price.toLocaleString()}</span>
+                <p className="text-xs text-brand-gray-500">{p.reviews ?? 0} reviews</p></div>
+              <span className="font-mono text-sm">LE {(p.price ?? 0).toLocaleString()}</span>
             </div>
           ))}
         </div>
@@ -127,7 +135,7 @@ function AdminProducts() {
   const [modal, setModal] = useState(null);
   const [form, setForm] = useState({});
 
-  const load = () => axios.get('/api/products').then(r => setProducts(r.data.products));
+  const load = () => axios.get('/api/products').then(r => setProducts(r.data?.products || [])).catch(() => setProducts([]));
   useEffect(() => { load(); }, []);
 
   const openNew = () => setModal({ mode: 'new', data: { name: '', price: '', originalPrice: '', category: 'compressions', gender: 'men', sizes: ['S','M','L','XL'], colors: ['#000000'], images: [], description: '', stock: 50, badge: '', discount: 0 } });
@@ -172,7 +180,7 @@ function AdminProducts() {
               <tr key={p.id} className="border-b border-brand-gray-100 hover:bg-brand-gray-50">
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
-                    <img src={p.images[0]} alt="" className="w-10 h-10 object-cover bg-brand-gray-100" referrerPolicy="no-referrer" loading="lazy" onError={handleImageError}/>
+                    <img src={p.images?.[0] || placeholderImage} alt="" className="w-10 h-10 object-cover bg-brand-gray-100" referrerPolicy="no-referrer" loading="lazy" onError={handleImageError}/>
                     <span className="font-semibold">{p.name}</span>
                   </div>
                 </td>
@@ -250,7 +258,7 @@ function AdminOrders() {
   const [orders, setOrders] = useState([]);
   const [selected, setSelected] = useState(null);
 
-  const load = () => axios.get('/api/orders').then(r => setOrders(r.data.orders)).catch(() => {});
+  const load = () => axios.get('/api/orders').then(r => setOrders(r.data?.orders || [])).catch(() => setOrders([]));
   useEffect(() => { load(); }, []);
 
   const updateStatus = async (id, status) => {
@@ -346,7 +354,11 @@ function AdminOrders() {
 // Customers
 function AdminCustomers() {
   const [customers, setCustomers] = useState([]);
-  useEffect(() => { axios.get('/api/admin/customers').then(r => setCustomers(r.data)).catch(() => {}); }, []);
+  useEffect(() => {
+    axios.get('/api/admin/customers')
+      .then(r => setCustomers(r.data || []))
+      .catch(() => setCustomers([]));
+  }, []);
   return (
     <div>
       <h2 className="font-display text-4xl tracking-widest mb-6">CUSTOMERS</h2>

@@ -44,7 +44,8 @@ export default function Shop() {
     q.set('limit', 12);
 
     axios.get(`/api/products?${q}`)
-      .then(r => { setProducts(r.data.products); setTotal(r.data.total); })
+      .then(r => { setProducts(r.data?.products || []); setTotal(r.data?.total || 0); })
+      .catch(() => { setProducts([]); setTotal(0); })
       .finally(() => setLoading(false));
   }, [category, gender, sort, search, page]);
 
